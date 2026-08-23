@@ -76,8 +76,6 @@ export default function Home() {
         className="animate-pop-in relative overflow-hidden rounded-2xl border border-line bg-white p-4 shadow-sm sm:p-5"
         style={{ animationDelay: "80ms" }}
       >
-        {loading ? <div className="searching-bar absolute inset-x-0 top-0 h-0.5" /> : null}
-
         <div className="relative mb-4 grid w-56 grid-cols-2 rounded-xl border border-line bg-canvas p-1 text-sm font-medium">
           <span
             className="pointer-events-none absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-accent shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"

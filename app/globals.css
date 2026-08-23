@@ -44,15 +44,6 @@ body {
   }
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
 .animate-fade-up {
   animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -145,24 +136,12 @@ body {
   animation: chip-out 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.searching-bar {
-  background: linear-gradient(
-    90deg,
-    var(--color-accent) 0%,
-    #4ade80 40%,
-    var(--color-accent) 80%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.2s linear infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-pop-in,
   .animate-field-in,
   .job-card,
-  .animate-chip-out,
-  .searching-bar {
+  .animate-chip-out {
     animation: none;
   }
 
