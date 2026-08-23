@@ -1,4 +1,5 @@
 import { stripHtml } from "../normalize";
+import { primaryKeyword } from "../keywords";
 import type { JobSource, RawJob } from "../types";
 import { fetchJson } from "./util";
 
@@ -36,7 +37,9 @@ export function wordpressBoard(opts: {
       const url = new URL(`${opts.baseUrl}/wp-json/wp/v2/posts`);
       url.searchParams.set("per_page", "50");
       url.searchParams.set("_fields", "id,date,link,title,content");
-      if (params.keywords.trim()) url.searchParams.set("search", params.keywords.trim());
+      if (primaryKeyword(params.keywords)) {
+        url.searchParams.set("search", primaryKeyword(params.keywords));
+      }
 
       const posts = await fetchJson<WpPost[]>(url.toString());
       return posts

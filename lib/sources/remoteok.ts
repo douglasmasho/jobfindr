@@ -1,4 +1,5 @@
 import { stripHtml } from "../normalize";
+import { matchesAnyKeyword } from "../keywords";
 import type { JobSource, RawJob } from "../types";
 import { fetchJson } from "./util";
 
@@ -25,14 +26,18 @@ export const remoteok: JobSource = {
   scope: "remote",
   async search(params) {
     const rows = await fetchJson<RemoteOkJob[]>("https://remoteok.com/api");
-    const terms = params.keywords.toLowerCase().split(/[\s,]+/).filter(Boolean);
     const jobs = rows
       .filter((r) => r.position && r.company)
-      .filter((r) => {
-        if (!terms.length) return true;
-        const hay = `${r.position} ${r.company} ${(r.tags ?? []).join(" ")}`.toLowerCase();
-        return terms.some((t) => hay.includes(t));
-      })
+      .filter((r) =>
+        matchesAnyKeyword(
+          {
+            title: r.position!,
+            company: r.company!,
+            description: r.description ?? "",
+          },
+          params.keywords,
+        ),
+      )
       .slice(0, 60)
       .map(
         (r): RawJob => ({

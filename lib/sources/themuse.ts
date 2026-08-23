@@ -1,4 +1,5 @@
 import { stripHtml } from "../normalize";
+import { matchesAnyKeyword, primaryKeyword } from "../keywords";
 import type { JobSource, RawJob } from "../types";
 import { fetchJson, normalizeBasis, inferMode } from "./util";
 
@@ -27,14 +28,14 @@ export const themuse: JobSource = {
       url.searchParams.set("location", params.location);
     }
     const data = await fetchJson<MuseResponse>(url.toString());
-    const terms = params.keywords.toLowerCase().split(/[\s,]+/).filter(Boolean);
     return (data.results ?? [])
       .filter((r) => r.name)
-      .filter((r) => {
-        if (!terms.length) return true;
-        const hay = `${r.name} ${r.company?.name ?? ""}`.toLowerCase();
-        return terms.some((t) => hay.includes(t));
-      })
+      .filter((r) =>
+        matchesAnyKeyword(
+          { title: r.name, company: r.company?.name ?? "", description: r.contents ?? "" },
+          params.keywords,
+        ),
+      )
       .slice(0, 50)
       .map((r): RawJob => {
         const location = r.locations?.map((l) => l.name).filter(Boolean).join(", ") || "";

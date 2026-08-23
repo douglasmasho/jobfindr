@@ -130,6 +130,21 @@ body {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
 }
 
+@keyframes chip-out {
+  to {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
+.chip {
+  @apply inline-flex items-center gap-1 rounded-full border border-line bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-dark transition-colors hover:bg-accent hover:text-white;
+}
+
+.animate-chip-out {
+  animation: chip-out 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .searching-bar {
   background: linear-gradient(
     90deg,
@@ -146,6 +161,7 @@ body {
   .animate-pop-in,
   .animate-field-in,
   .job-card,
+  .animate-chip-out,
   .searching-bar {
     animation: none;
   }

@@ -1,4 +1,5 @@
 import { stripHtml } from "../normalize";
+import { primaryKeyword } from "../keywords";
 import type { JobSource, RawJob } from "../types";
 import { fetchJson } from "./util";
 
@@ -51,7 +52,7 @@ export const adzuna: JobSource = {
     url.searchParams.set("app_id", appId);
     url.searchParams.set("app_key", appKey);
     url.searchParams.set("results_per_page", "50");
-    url.searchParams.set("what", params.keywords || "");
+    url.searchParams.set("what", primaryKeyword(params.keywords));
     url.searchParams.set("content-type", "application/json");
 
     const data = await fetchJson<AdzunaResponse>(url.toString());

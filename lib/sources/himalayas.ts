@@ -1,4 +1,5 @@
 import { stripHtml } from "../normalize";
+import { matchesAnyKeyword } from "../keywords";
 import type { JobSource, RawJob } from "../types";
 import { fetchJson, inferBasis } from "./util";
 
@@ -23,14 +24,18 @@ export const himalayas: JobSource = {
   scope: "remote",
   async search(params) {
     const data = await fetchJson<HimalayasResponse>("https://himalayas.app/jobs/api?limit=100");
-    const terms = params.keywords.toLowerCase().split(/[\s,]+/).filter(Boolean);
     return (data.jobs ?? [])
       .filter((j) => j.title)
-      .filter((j) => {
-        if (!terms.length) return true;
-        const hay = `${j.title} ${j.companyName} ${(j.categories ?? []).join(" ")}`.toLowerCase();
-        return terms.some((t) => hay.includes(t));
-      })
+      .filter((j) =>
+        matchesAnyKeyword(
+          {
+            title: j.title!,
+            company: j.companyName ?? "",
+            description: j.description ?? "",
+          },
+          params.keywords,
+        ),
+      )
       .slice(0, 60)
       .map((j): RawJob => {
         const restrictions = j.locationRestrictions ?? [];

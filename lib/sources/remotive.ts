@@ -1,4 +1,5 @@
 import { stripHtml } from "../normalize";
+import { primaryKeyword } from "../keywords";
 import type { JobSource, RawJob } from "../types";
 import { fetchJson, inferBasis } from "./util";
 
@@ -23,7 +24,7 @@ export const remotive: JobSource = {
   name: "Remotive",
   scope: "remote",
   async search(params) {
-    const q = encodeURIComponent(params.keywords.trim());
+    const q = encodeURIComponent(primaryKeyword(params.keywords));
     const data = await fetchJson<RemotiveResponse>(
       `https://remotive.com/api/remote-jobs${q ? `?search=${q}` : ""}`,
     );

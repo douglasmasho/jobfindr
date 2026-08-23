@@ -8,6 +8,9 @@ import type { CacheStats, Job, SearchParams } from "./types";
 export const JOBS_COL = "liteJobs";
 export const QUERIES_COL = "liteQueries";
 
+/** Pull Firestore only when a live crawl returns fewer matches than this. */
+export const SUPPLEMENT_IF_BELOW = 8;
+
 const JOB_READ_LIMIT = 200;
 const QUERY_JOB_CAP = 500;
 const DESC_CAP = 8_000;
@@ -29,17 +32,18 @@ function jobDocId(jobId: string): string {
 
 /** Same search (any user) shares one query document. Filters are applied after fetch. */
 export function queryKey(params: SearchParams): string {
-  const keywords = params.keywords.toLowerCase().trim().replace(/\s+/g, " ");
+  const keywords = [...params.keywords]
+    .map((k) => k.toLowerCase().trim())
+    .sort()
+    .join("|");
   const location = params.mode === "local" ? params.location.toLowerCase().trim() : "";
   return sha256(`${params.mode}|${keywords}|${location}`);
 }
 
 function keywordTokens(params: SearchParams): string[] {
   return params.keywords
-    .toLowerCase()
-    .split(/[\s,]+/)
-    .map((t) => t.trim())
-    .filter((t) => t.length > 1)
+    .map((k) => k.toLowerCase().trim())
+    .filter((k) => k.length > 1)
     .slice(0, 8);
 }
 
@@ -83,8 +87,8 @@ async function loadByIds(db: Firestore, ids: string[]): Promise<Job[]> {
 }
 
 /**
- * Pull previously stored jobs that match this search: exact query cache,
- * plus keyword/country pools so a related search still benefits.
+ * Pull previously stored jobs to top up a sparse live crawl: exact query cache,
+ * then keyword pool. Country-wide pool only when no keywords (avoids stale bleed).
  */
 export async function readCachedJobs(params: SearchParams): Promise<Job[]> {
   const db = getDb();
@@ -109,9 +113,7 @@ export async function readCachedJobs(params: SearchParams): Promise<Job[]> {
         .limit(JOB_READ_LIMIT)
         .get();
       add(tokenSnap.docs.map((d) => toJob(d.data() as StoredJob)).filter((j): j is Job => Boolean(j)));
-    }
-
-    if (params.mode === "local" && params.location.trim()) {
+    } else if (params.mode === "local" && params.location.trim()) {
       const countrySnap = await db
         .collection(JOBS_COL)
         .where("countryKey", "==", params.location.trim().toLowerCase())

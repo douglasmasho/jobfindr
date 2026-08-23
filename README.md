@@ -40,13 +40,12 @@ Optional Adzuna keys go in `.env` (see `.env.example`). No keys are required.
 ## How it works
 
 1. `POST /api/search` with `{ mode, keywords, location, workMode, workBasis }`.
-2. The server reads matching jobs from Firestore (shared cache) **in parallel**
-   with live board requests. A failing board is skipped, not fatal.
+2. Live board requests always run first. A failing board is skipped, not fatal.
 3. Raw live jobs are normalized + fingerprint-deduped, then `applyFilters`
    keeps listings matching keywords, location, work mode, and work basis.
-4. Cached hits and live hits are merged (new live listings are added; the same
-   fingerprint is refreshed from live). The merged set is written back to
-   Firestore so the next search — same user or someone else — can reuse it.
+4. Firestore is read **only when the live crawl returns fewer than 8 matches**
+   — then cached jobs top up the result set. Every search still writes fresh
+   listings back to Firestore for later supplementing.
 5. The client renders the results and can export them to CSV.
 
 The browser never talks to Firestore. Only the Next.js server uses the

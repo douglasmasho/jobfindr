@@ -1,4 +1,5 @@
 import { stripHtml } from "../normalize";
+import { matchesAnyKeyword } from "../keywords";
 import type { JobSource, RawJob } from "../types";
 import { fetchJson, inferBasis, inferMode } from "./util";
 
@@ -24,13 +25,17 @@ export const arbeitnow: JobSource = {
   scope: "remote",
   async search(params) {
     const data = await fetchJson<ArbeitnowResponse>("https://www.arbeitnow.com/api/job-board-api");
-    const terms = params.keywords.toLowerCase().split(/[\s,]+/).filter(Boolean);
     return (data.data ?? [])
-      .filter((r) => {
-        if (!terms.length) return true;
-        const hay = `${r.title} ${r.company_name} ${(r.tags ?? []).join(" ")}`.toLowerCase();
-        return terms.some((t) => hay.includes(t));
-      })
+      .filter((r) =>
+        matchesAnyKeyword(
+          {
+            title: r.title,
+            company: r.company_name,
+            description: r.description ?? "",
+          },
+          params.keywords,
+        ),
+      )
       .slice(0, 60)
       .map(
         (r): RawJob => ({

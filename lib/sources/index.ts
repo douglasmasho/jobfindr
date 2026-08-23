@@ -18,8 +18,28 @@ const ALL_SOURCES: JobSource[] = [
   himalayas,
 ];
 
+/** Boards that accept one search phrase per HTTP request — run once per pill. */
+const PER_QUERY_SOURCES = new Set([
+  "adzuna",
+  "remotive",
+  "najobs",
+  "jobsinnamibia",
+]);
+
 function sourcesForMode(mode: SearchParams["mode"]): JobSource[] {
   return ALL_SOURCES.filter((s) => s.scope === "both" || s.scope === mode);
+}
+
+async function searchSource(source: JobSource, params: SearchParams): Promise<RawJob[]> {
+  const pills = params.keywords.filter(Boolean);
+  if (!pills.length) return source.search({ ...params, keywords: [] });
+  if (!PER_QUERY_SOURCES.has(source.id)) {
+    return source.search(params);
+  }
+  const batches = await Promise.all(
+    pills.map((kw) => source.search({ ...params, keywords: [kw] })),
+  );
+  return batches.flat();
 }
 
 /**
@@ -34,7 +54,7 @@ export async function runSources(
   const settled = await Promise.all(
     sources.map(async (source): Promise<{ run: SourceRun; jobs: RawJob[] }> => {
       try {
-        const jobs = await source.search(params);
+        const jobs = await searchSource(source, params);
         return {
           jobs,
           run: { id: source.id, name: source.name, status: "ok", count: jobs.length },

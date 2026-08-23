@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
-import { mergeJobs, readCachedJobs, writeCachedJobs } from "@/lib/cache";
+import {
+  mergeJobs,
+  readCachedJobs,
+  SUPPLEMENT_IF_BELOW,
+  writeCachedJobs,
+} from "@/lib/cache";
+import { normalizeKeywords } from "@/lib/keywords";
 import { applyFilters } from "@/lib/filter";
 import { normalize } from "@/lib/normalize";
 import { runSources } from "@/lib/sources";
@@ -21,7 +27,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const params: SearchParams = {
     mode: body.mode === "remote" ? "remote" : "local",
-    keywords: typeof body.keywords === "string" ? body.keywords.trim() : "",
+    keywords: normalizeKeywords(body.keywords),
     location: typeof body.location === "string" ? body.location.trim() : "",
     workMode: WORK_MODES.includes(body.workMode as WorkMode) ? (body.workMode as WorkMode) : "any",
     workBasis: WORK_BASES.includes(body.workBasis as WorkBasis)
@@ -30,12 +36,21 @@ export async function POST(req: Request): Promise<Response> {
   };
 
   try {
-    const [cached, live] = await Promise.all([
-      readCachedJobs(params),
-      runSources(params),
-    ]);
+    // Live crawl always runs first — cache only tops up when the crawl is sparse.
+    const live = await runSources(params);
     const fresh = applyFilters(normalize(live.raws), params);
-    const { jobs, stats } = mergeJobs(cached, fresh);
+
+    let jobs: SearchResponse["jobs"];
+    let stats: NonNullable<SearchResponse["cache"]>;
+
+    if (fresh.length < SUPPLEMENT_IF_BELOW) {
+      const cached = await readCachedJobs(params);
+      ({ jobs, stats } = mergeJobs(cached, fresh));
+    } else {
+      jobs = fresh.sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
+      stats = { fromCache: 0, fromLive: jobs.length };
+    }
+
     void writeCachedJobs(params, jobs);
     const payload: SearchResponse = { jobs, sources: live.runs, cache: stats };
     return NextResponse.json(payload);

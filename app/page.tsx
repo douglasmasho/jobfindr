@@ -1,7 +1,8 @@
 "use client";
 
 import { Download, Globe, Loader2, MapPin, Search } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { KeywordPills, type KeywordPillsHandle } from "@/components/KeywordPills";
 import { JobList } from "@/components/JobList";
 import { COUNTRIES, WORK_BASES, WORK_MODES } from "@/lib/constants";
 import { downloadJobsCsv } from "@/lib/csv";
@@ -9,7 +10,8 @@ import type { CacheStats, Job, Mode, SearchParams, SearchResponse, SourceRun, Wo
 
 export default function Home() {
   const [mode, setMode] = useState<Mode>("local");
-  const [keywords, setKeywords] = useState("");
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const keywordRef = useRef<KeywordPillsHandle>(null);
   const [location, setLocation] = useState<string>(COUNTRIES[0]);
   const [workMode, setWorkMode] = useState<WorkMode | "any">("any");
   const [workBasis, setWorkBasis] = useState<WorkBasis | "any">("any");
@@ -27,7 +29,8 @@ export default function Home() {
     setLoading(true);
     setError("");
     try {
-      const body: SearchParams = { mode, keywords, location, workMode, workBasis };
+      const pills = keywordRef.current?.commitPending() ?? keywords;
+      const body: SearchParams = { mode, keywords: pills, location, workMode, workBasis };
       const res = await fetch("/api/search", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -106,18 +109,12 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <label className="flex-1 text-sm">
-            <span className="mb-1 block font-medium text-slate-700">Keywords</span>
-            <div className="field flex h-11 items-center gap-2 rounded-xl border border-line px-3">
-              <Search className="h-4 w-4 text-mute transition-colors duration-200" />
-              <input
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-                placeholder="e.g. accountant, react developer"
-                className="h-full w-full bg-transparent text-sm outline-none"
-              />
-            </div>
-          </label>
+          <KeywordPills
+            ref={keywordRef}
+            keywords={keywords}
+            onChange={setKeywords}
+            disabled={loading}
+          />
 
           {mode === "local" ? (
             <label className="animate-field-in text-sm lg:w-52">
@@ -208,9 +205,11 @@ export default function Home() {
               <p className="text-xs text-mute">
                 {okSources} of {sources.length} sources responded
                 {mode === "local" ? ` · ${location}` : " · remote"}
-                {cache && (cache.fromCache > 0 || cache.fromLive > 0)
-                  ? ` · ${cache.fromCache} from cache · ${cache.fromLive} new`
-                  : ""}
+                {cache?.fromCache
+                  ? ` · ${cache.fromCache} from cache · ${cache.fromLive} live`
+                  : cache?.fromLive
+                    ? ` · ${cache.fromLive} live`
+                    : ""}
               </p>
             </div>
             <button

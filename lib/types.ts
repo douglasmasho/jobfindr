@@ -23,7 +23,8 @@ export type RawJob = Omit<Job, "id">;
 
 export interface SearchParams {
   mode: Mode;
-  keywords: string;
+  /** Each entry is one phrase pill (e.g. "systems administrator"). OR-matched in filters. */
+  keywords: string[];
   /** Country name, only meaningful in local mode. */
   location: string;
   workMode: WorkMode | "any";
