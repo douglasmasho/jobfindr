@@ -10,32 +10,14 @@ export type KeywordPillsHandle = {
   commitPending: () => string[];
 };
 
-export const KeywordPills = forwardRef<
-  KeywordPillsHandle,
-  {
-    keywords: string[];
-    onChange: (next: string[]) => void;
-    disabled?: boolean;
-  }
->(function KeywordPills({ keywords, onChange, disabled }, ref) {
-  const [draft, setDraft] = useState("");
+function useKeywordActions(
+  keywords: string[],
+  onChange: (next: string[]) => void,
+) {
   const [exiting, setExiting] = useState<Set<string>>(new Set());
   const exitTimers = useRef<Map<string, number>>(new Map());
   const keywordsRef = useRef(keywords);
   keywordsRef.current = keywords;
-
-  function addKeyword(value: string): string[] {
-    const pill = value.trim().replace(/\s+/g, " ");
-    if (!pill) return keywordsRef.current;
-    if (keywordsRef.current.includes(pill)) {
-      setDraft("");
-      return keywordsRef.current;
-    }
-    const next = [...keywordsRef.current, pill];
-    onChange(next);
-    setDraft("");
-    return next;
-  }
 
   function removeKeyword(keyword: string) {
     if (exiting.has(keyword)) return;
@@ -52,6 +34,67 @@ export const KeywordPills = forwardRef<
     exitTimers.current.set(keyword, timer);
   }
 
+  return { exiting, removeKeyword };
+}
+
+export function KeywordPillStrip({
+  keywords,
+  onChange,
+  disabled,
+}: {
+  keywords: string[];
+  onChange: (next: string[]) => void;
+  disabled?: boolean;
+}) {
+  const { exiting, removeKeyword } = useKeywordActions(keywords, onChange);
+
+  if (!keywords.length) return null;
+
+  return (
+    <div className="scrollbar-green -mx-1 overflow-x-auto px-1 pb-1">
+      <div className="flex w-max flex-nowrap gap-2">
+        {keywords.map((keyword, i) => (
+          <button
+            key={keyword}
+            type="button"
+            disabled={disabled}
+            className={`chip shrink-0 ${exiting.has(keyword) ? "animate-chip-out" : "animate-pop-in"}`}
+            style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+            onClick={() => removeKeyword(keyword)}
+          >
+            {keyword} <X className="h-3 w-3" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export const KeywordPills = forwardRef<
+  KeywordPillsHandle,
+  {
+    keywords: string[];
+    onChange: (next: string[]) => void;
+    disabled?: boolean;
+  }
+>(function KeywordPills({ keywords, onChange, disabled }, ref) {
+  const [draft, setDraft] = useState("");
+  const keywordsRef = useRef(keywords);
+  keywordsRef.current = keywords;
+
+  function addKeyword(value: string): string[] {
+    const pill = value.trim().replace(/\s+/g, " ");
+    if (!pill) return keywordsRef.current;
+    if (keywordsRef.current.includes(pill)) {
+      setDraft("");
+      return keywordsRef.current;
+    }
+    const next = [...keywordsRef.current, pill];
+    onChange(next);
+    setDraft("");
+    return next;
+  }
+
   useImperativeHandle(ref, () => ({
     commitPending: () => addKeyword(draft),
   }));
@@ -61,52 +104,48 @@ export const KeywordPills = forwardRef<
       e.preventDefault();
       addKeyword(draft);
     }
-    if (e.key === "Backspace" && !draft && keywords.length) {
-      removeKeyword(keywords[keywords.length - 1]!);
-    }
   }
 
   const canAdd = draft.trim().length > 0 && !disabled;
 
+  const addButtonClass =
+    "btn-press shrink-0 items-center justify-center rounded-xl border border-line bg-white text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50";
+
   return (
     <div className="flex-1 text-sm">
       <span className="mb-1 block font-medium text-slate-700">Keywords</span>
-      <div className="field flex min-h-11 flex-wrap items-center gap-2 rounded-xl border border-line px-3 py-2">
-        <Search className="h-4 w-4 shrink-0 text-mute" />
-        {keywords.map((keyword, i) => (
-          <button
-            key={keyword}
-            type="button"
+      <div className="flex items-stretch gap-2">
+        <div className="field flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line px-3">
+          <Search className="h-4 w-4 shrink-0 text-mute" />
+          <input
+            value={draft}
             disabled={disabled}
-            className={`chip ${exiting.has(keyword) ? "animate-chip-out" : "animate-pop-in"}`}
-            style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
-            onClick={() => removeKeyword(keyword)}
-          >
-            {keyword} <X className="h-3 w-3" />
-          </button>
-        ))}
-        <input
-          value={draft}
-          disabled={disabled}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={handleKeyDown}
-          enterKeyHint="done"
-          placeholder={keywords.length ? "Add another keyword…" : "e.g. systems administrator"}
-          className="min-w-[8rem] flex-1 bg-transparent text-sm outline-none"
-        />
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={handleKeyDown}
+            enterKeyHint="done"
+            placeholder={keywords.length ? "Add another keyword…" : "systems administrator"}
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+          />
+        </div>
+        <button
+          type="button"
+          disabled={!canAdd}
+          onClick={() => addKeyword(draft)}
+          aria-label="Add keyword"
+          className={`${addButtonClass} hidden h-11 w-11 lg:inline-flex`}
+        >
+          <Plus className="h-4 w-4" />
+        </button>
       </div>
       <button
         type="button"
         disabled={!canAdd}
         onClick={() => addKeyword(draft)}
-        className="btn-press mt-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-white px-3 text-sm font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+        className={`${addButtonClass} mt-2 inline-flex h-9 w-full gap-1.5 px-3 text-sm font-semibold lg:hidden`}
       >
         <Plus className="h-4 w-4" />
         Add keyword
       </button>
-      <p className="mt-1 text-[11px] text-mute">
-        Tap Add keyword (or press Enter) for each phrase. Stack several pills to broaden results.
-      </p>
     </div>
   );
 });

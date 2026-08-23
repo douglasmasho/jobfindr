@@ -2,7 +2,7 @@
 
 import { Download, Globe, Loader2, MapPin, Search } from "lucide-react";
 import { useRef, useState } from "react";
-import { KeywordPills, type KeywordPillsHandle } from "@/components/KeywordPills";
+import { KeywordPillStrip, KeywordPills, type KeywordPillsHandle } from "@/components/KeywordPills";
 import { JobList } from "@/components/JobList";
 import { COUNTRIES, WORK_BASES, WORK_MODES } from "@/lib/constants";
 import { downloadJobsCsv } from "@/lib/csv";
@@ -106,69 +106,73 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <KeywordPills
-            ref={keywordRef}
-            keywords={keywords}
-            onChange={setKeywords}
-            disabled={loading}
-          />
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <KeywordPills
+              ref={keywordRef}
+              keywords={keywords}
+              onChange={setKeywords}
+              disabled={loading}
+            />
 
-          {mode === "local" ? (
-            <label className="animate-field-in text-sm lg:w-52">
-              <span className="mb-1 block font-medium text-slate-700">Location</span>
+            {mode === "local" ? (
+              <label className="animate-field-in text-sm lg:w-52">
+                <span className="mb-1 block font-medium text-slate-700">Location</span>
+                <select
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="field h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
+            <label className="text-sm lg:w-44">
+              <span className="mb-1 block font-medium text-slate-700">Work mode</span>
               <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                value={workMode}
+                onChange={(e) => setWorkMode(e.target.value as WorkMode | "any")}
                 className="field h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
               >
-                {COUNTRIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                {WORK_MODES.map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
                   </option>
                 ))}
               </select>
             </label>
-          ) : null}
 
-          <label className="text-sm lg:w-44">
-            <span className="mb-1 block font-medium text-slate-700">Work mode</span>
-            <select
-              value={workMode}
-              onChange={(e) => setWorkMode(e.target.value as WorkMode | "any")}
-              className="field h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
+            <label className="text-sm lg:w-40">
+              <span className="mb-1 block font-medium text-slate-700">Work basis</span>
+              <select
+                value={workBasis}
+                onChange={(e) => setWorkBasis(e.target.value as WorkBasis | "any")}
+                className="field h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
+              >
+                {WORK_BASES.map((b) => (
+                  <option key={b.value} value={b.value}>
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-6 text-sm font-semibold text-white hover:bg-accent-dark disabled:opacity-60"
             >
-              {WORK_MODES.map((m) => (
-                <option key={m.value} value={m.value}>
-                  {m.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              {loading ? "Searching…" : "Search"}
+            </button>
+          </div>
 
-          <label className="text-sm lg:w-40">
-            <span className="mb-1 block font-medium text-slate-700">Work basis</span>
-            <select
-              value={workBasis}
-              onChange={(e) => setWorkBasis(e.target.value as WorkBasis | "any")}
-              className="field h-11 w-full rounded-xl border border-line bg-white px-3 text-sm outline-none"
-            >
-              {WORK_BASES.map((b) => (
-                <option key={b.value} value={b.value}>
-                  {b.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-press inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-6 text-sm font-semibold text-white hover:bg-accent-dark disabled:opacity-60"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            {loading ? "Searching…" : "Search"}
-          </button>
+          <KeywordPillStrip keywords={keywords} onChange={setKeywords} disabled={loading} />
         </div>
       </form>
 
