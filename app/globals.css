@@ -1,0 +1,158 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: #16a34a;
+  --color-accent-dark: #166534;
+  --color-accent-soft: #dcfce7;
+  --color-ink: #0f172a;
+  --color-mute: #64748b;
+  --color-line: #e2e8f0;
+  --color-canvas: #f8fafc;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-field-in {
+  animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.job-card {
+  animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.job-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line));
+  box-shadow:
+    0 12px 24px -12px rgb(15 23 42 / 0.18),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.job-card .apply-link {
+  transition: gap 0.2s ease, color 0.2s ease;
+}
+
+.job-card:hover .apply-link,
+.job-card .apply-link:hover {
+  gap: 0.4rem;
+}
+
+.job-card .apply-link svg {
+  transition: transform 0.2s ease;
+}
+
+.job-card:hover .apply-link svg,
+.job-card .apply-link:hover svg {
+  transform: translate(2px, -1px);
+}
+
+.btn-press {
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.btn-press:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px -8px rgb(22 163 74 / 0.55);
+}
+
+.btn-press:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: none;
+}
+
+.field {
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.field:focus-within,
+.field:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 22%, transparent);
+}
+
+.searching-bar {
+  background: linear-gradient(
+    90deg,
+    var(--color-accent) 0%,
+    #4ade80 40%,
+    var(--color-accent) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-pop-in,
+  .animate-field-in,
+  .job-card,
+  .searching-bar {
+    animation: none;
+  }
+
+  .job-card:hover,
+  .btn-press:hover:not(:disabled),
+  .btn-press:active:not(:disabled) {
+    transform: none;
+  }
+}

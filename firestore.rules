@@ -1,0 +1,45 @@
+rules_version = '2';
+
+// ===============================================================
+// Assumed data model (shanda-lite cache, same GCP project as shanda)
+// ===============================================================
+//
+// Browsers never talk to Firestore. The Next.js `/api/search` route uses
+// the Admin SDK (bypasses these rules). Client SDK access is denied.
+//
+// Collection: liteJobs
+// Document ID: sha256(job fingerprint)
+// Fields:
+//   - id: string (fingerprint, e.g. url:https://...)
+//   - title, company, location, description, url, source: string
+//   - country, remoteType, employmentType, postedAt, salary: optional string
+//   - countryKey: string (lowercase country for queries)
+//   - tokens: string[] (keyword tokens from searches that stored this job)
+//   - lastSeenAt: string (ISO)
+//
+// Collection: liteQueries
+// Document ID: sha256(mode|keywords|location)
+// Fields:
+//   - key, mode, keywords, location: string
+//   - jobIds: string[] (fingerprints)
+//   - count: number
+//   - updatedAt: string (ISO)
+//   - hitCount: number
+//
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
