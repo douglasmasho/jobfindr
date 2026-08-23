@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 
 const CHIP_EXIT_MS = 220;
@@ -66,6 +66,8 @@ export const KeywordPills = forwardRef<
     }
   }
 
+  const canAdd = draft.trim().length > 0 && !disabled;
+
   return (
     <div className="flex-1 text-sm">
       <span className="mb-1 block font-medium text-slate-700">Keywords</span>
@@ -88,12 +90,22 @@ export const KeywordPills = forwardRef<
           disabled={disabled}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={handleKeyDown}
+          enterKeyHint="done"
           placeholder={keywords.length ? "Add another keyword…" : "e.g. systems administrator"}
           className="min-w-[8rem] flex-1 bg-transparent text-sm outline-none"
         />
       </div>
+      <button
+        type="button"
+        disabled={!canAdd}
+        onClick={() => addKeyword(draft)}
+        className="btn-press mt-2 inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line bg-white px-3 text-sm font-semibold text-ink hover:bg-canvas disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Plus className="h-4 w-4" />
+        Add keyword
+      </button>
       <p className="mt-1 text-[11px] text-mute">
-        Enter adds a phrase pill. Each pill is one search query — stack several to broaden results.
+        Tap Add keyword (or press Enter) for each phrase. Stack several pills to broaden results.
       </p>
     </div>
   );
