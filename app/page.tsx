@@ -76,6 +76,7 @@ export default function Home() {
         className="animate-pop-in relative overflow-hidden rounded-2xl border border-line bg-white p-4 shadow-sm sm:p-5"
         style={{ animationDelay: "80ms" }}
       >
+        {loading ? <div className="searching-bar" aria-hidden /> : null}
         <div className="relative mb-4 grid w-56 grid-cols-2 rounded-xl border border-line bg-canvas p-1 text-sm font-medium">
           <span
             className="pointer-events-none absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-lg bg-accent shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -181,19 +182,25 @@ export default function Home() {
       ) : null}
 
       {loading ? (
-        <section className="mt-6 grid gap-3 sm:grid-cols-2" aria-hidden>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="animate-fade-up h-40 rounded-xl border border-line bg-white p-4"
-              style={{ animationDelay: `${i * 70}ms` }}
-            >
-              <div className="h-4 w-3/5 rounded bg-slate-100" />
-              <div className="mt-3 h-3 w-2/5 rounded bg-slate-100" />
-              <div className="mt-5 h-3 w-full rounded bg-slate-50" />
-              <div className="mt-2 h-3 w-4/5 rounded bg-slate-50" />
-            </div>
-          ))}
+        <section className="mt-6" aria-busy="true" aria-live="polite">
+          <p className="animate-fade-up mb-4 flex items-center gap-2 text-sm text-mute">
+            <Loader2 className="h-4 w-4 animate-spin text-accent" aria-hidden />
+            Searching job boards…
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="animate-fade-up h-40 rounded-xl border border-line bg-white p-4"
+                style={{ animationDelay: `${i * 70}ms` }}
+              >
+                <div className="skeleton-shimmer h-4 w-3/5 rounded" />
+                <div className="skeleton-shimmer mt-3 h-3 w-2/5 rounded" />
+                <div className="skeleton-shimmer mt-5 h-3 w-full rounded" />
+                <div className="skeleton-shimmer mt-2 h-3 w-4/5 rounded" />
+              </div>
+            ))}
+          </div>
         </section>
       ) : null}
 

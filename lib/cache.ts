@@ -11,6 +11,12 @@ export const QUERIES_COL = "liteQueries";
 /** Pull Firestore only when a live crawl returns fewer matches than this. */
 export const SUPPLEMENT_IF_BELOW = 8;
 
+/**
+ * Cache is a top-up, never the bulk of a result set: cap how many cache-only
+ * jobs get spliced in so a sparse live crawl can't be swamped by old listings.
+ */
+export const MAX_CACHE_TOPUP = 12;
+
 const JOB_READ_LIMIT = 200;
 const QUERY_JOB_CAP = 500;
 const DESC_CAP = 8_000;
@@ -129,23 +135,24 @@ export async function readCachedJobs(params: SearchParams): Promise<Job[]> {
   }
 }
 
-/** Merge cached + live. Live overwrites on the same fingerprint so listings stay fresh. */
+/**
+ * Merge cached + live. Live always wins and always shows up in full; cache only
+ * fills the gap up to MAX_CACHE_TOPUP extra listings, freshest first, so a thin
+ * live crawl can't get buried under a pile of old cached postings.
+ */
 export function mergeJobs(cached: Job[], live: Job[]): { jobs: Job[]; stats: CacheStats } {
-  const cachedIds = new Set(cached.map((j) => j.id));
-  const byId = new Map<string, Job>();
-  for (const job of cached) byId.set(job.id, job);
-  let fromLive = 0;
-  for (const job of live) {
-    if (!byId.has(job.id)) fromLive += 1;
-    byId.set(job.id, job);
-  }
-  const jobs = [...byId.values()].sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""));
+  const liveIds = new Set(live.map((j) => j.id));
+  const cacheOnly = cached
+    .filter((j) => !liveIds.has(j.id))
+    .sort((a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""))
+    .slice(0, MAX_CACHE_TOPUP);
+
+  const jobs = [...live, ...cacheOnly].sort(
+    (a, b) => (b.postedAt ?? "").localeCompare(a.postedAt ?? ""),
+  );
   return {
     jobs,
-    stats: {
-      fromCache: [...byId.keys()].filter((id) => cachedIds.has(id)).length,
-      fromLive,
-    },
+    stats: { fromCache: cacheOnly.length, fromLive: live.length },
   };
 }
 
