@@ -56,7 +56,7 @@ export default function Home() {
   const okSources = sources.filter((s) => s.status === "ok").length;
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
+    <main className="mx-auto w-full max-w-5xl overflow-x-hidden px-4 py-8 sm:py-12">
       <header className="animate-fade-up mb-6">
         <h1 className="sr-only">Jobfindr</h1>
         <img
@@ -205,7 +205,7 @@ export default function Home() {
       ) : null}
 
       {searched && !loading ? (
-        <section className="animate-fade-up mt-6">
+        <section className="animate-fade-up mt-6 min-w-0">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold">

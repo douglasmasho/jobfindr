@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { FieldValue, type Firestore } from "firebase-admin/firestore";
 import { applyFilters } from "./filter";
 import { getDb } from "./firebase";
+import { previewText, stripHtml } from "./normalize";
 import type { CacheStats, Job, SearchParams } from "./types";
 
 /** Namespaced so lite never writes into shanda's `jobs` / `users` trees. */
@@ -63,17 +64,17 @@ function toJob(data: StoredJob): Job | null {
   if (!data?.id || !data.title) return null;
   return {
     id: data.id,
-    title: data.title,
-    company: data.company || "Unknown company",
-    location: data.location || "",
+    title: stripHtml(data.title),
+    company: stripHtml(data.company || "") || "Unknown company",
+    location: stripHtml(data.location || ""),
     country: data.country,
     remoteType: data.remoteType,
     employmentType: data.employmentType,
-    description: data.description || "",
+    description: previewText(data.description || ""),
     url: data.url || "",
     source: data.source || "",
     postedAt: data.postedAt,
-    salary: data.salary,
+    salary: data.salary ? stripHtml(data.salary) : data.salary,
   };
 }
 

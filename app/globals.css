@@ -16,6 +16,7 @@ body {
   background: var(--color-canvas);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  overflow-x: hidden;
 }
 
 * {
@@ -75,6 +76,9 @@ body {
 }
 
 .job-card {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   animation: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
   transition:
     transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
